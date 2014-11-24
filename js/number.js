@@ -5,8 +5,8 @@
 
     var number = number || {};
 
-    var FRACTION_BIT = 52;
     var EXPONENT_BIT = 11;
+    var FRACTION_BIT = 52;
 
     number.zero = 0;
 
@@ -27,14 +27,14 @@
     // 64 bit floating point by IEEE754
     // cf: https://en.wikipedia.org/wiki/IEEE_floating_point
     number.toDouble = function toDouble(x) {
-        var s = 0; // sign of x
-        var sign = 0; // 0 for plus or 1 for minus
-        var q = 0; // not bias
-        var exponent = 0; // bias 1023
-        var cStr = '0';
-        var c = 0; // 1.fraction
-        // var fraction = 0;
-        var emax = Math.pow(2, EXPONENT_BIT - 1) - 1;
+        var s; // sign of x
+        var sign; // 0 for plus or 1 for minus
+        var q; // exponent not bias
+        var exponent; // bias 1023
+        var cStr;
+        // var c; // 1.fraction
+        // var fraction;
+        var EMAX = Math.pow(2, EXPONENT_BIT - 1) - 1;
 
         var str = (x || 0).toString(2);
 
@@ -46,26 +46,26 @@
             return;
         } else if(number.isInteger(x)) {
             q = (str.match(/^-?1([01]*)$/) || {1: ''})[1].length;
-            exponent = q + emax;
 
-            cStr = (str.match(/^-?1([01]*)$/) || {1: ''})[1] || '0';
+            cStr = (str.match(/^-?1([01]*)$/) || {1: '0'})[1] || '0';
         } else {
             if(false) {
             } else if(Math.abs(x) > 1) {
                 q = (str.match(/^-?1([01]*)\.[01]*$/) || {1: ''})[1].length;
 
-                cStr = (str.replace(/\./, '').match(/^-?1([01]*)$/) || {1: ''})[1] || '0';
+                cStr = (str.replace(/\./, '').match(/^-?1([01]*)$/) || {1: '0'})[1] || '0';
             } else if(Math.abs(x) < 1) {
-                q = - ((str.match(/^-?[01]*\.[01]*1([01]*)$/) || {1: ' '})[1].length - 1);
+                q = - ((str.match(/^-?0\.(0*)1[01]*$/) || {1: ' '})[1].length + 1);
 
-                cStr = (str.match(/^-?[01]*\.[01]*1([01]*)$/) || {1: ''})[1] || '0';
+                cStr = (str.match(/^-?0\.0*1([01]*)$/) || {1: '0'})[1] || '0';
             } else {
                 q = 0;
 
                 cStr = '0';
             }
-            exponent = q + emax;
         }
+
+        exponent = q + EMAX;
 
         s = Math.sign(x);
         sign = (s === 0)? 0 : (s > 0)? 0 : 1;
