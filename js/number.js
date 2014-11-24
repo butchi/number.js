@@ -83,5 +83,30 @@
         return (str + zeros).slice(0, n);
     }
 
+    number.parseDouble = function parseDouble(str) {
+        var signStr;
+        var exponentStr;
+        var fractionStr;
+
+        var fraction;
+
+        var s; // sign
+        var q; // exponent not bias
+        var c; // 1.fraction
+
+        var EMAX = Math.pow(2, EXPONENT_BIT - 1) - 1;
+
+        signStr = str.slice(0, 1);
+        exponentStr = str.slice(1, 1 + EXPONENT_BIT);
+        fractionStr = str.slice(1 + EXPONENT_BIT, 1 + EXPONENT_BIT + FRACTION_BIT);
+
+        s = Math.pow(-1, parseInt(signStr, 2));
+        q = parseInt(exponentStr, 2) - EMAX;
+        fraction = parseInt(fractionStr, 2);
+        c = 1 + fraction / Math.pow(2, FRACTION_BIT);
+
+        return s * c * Math.pow(2, q);
+    };
+
     window.number = number;
 }());
