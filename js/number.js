@@ -5,8 +5,17 @@
 
     var number = number || {};
 
-    var EXPONENT_BIT = 11;
-    var FRACTION_BIT = 52;
+    var EXPONENT_BIT_16 = 5;
+    var FRACTION_BIT_16 = 10;
+
+    var EXPONENT_BIT_32 = 8;
+    var FRACTION_BIT_32 = 23;
+
+    var EXPONENT_BIT_64 = 11;
+    var FRACTION_BIT_64 = 52;
+
+    var EXPONENT_BIT_128 = 15;
+    var FRACTION_BIT_128 = 112;
 
     number.zero = 0;
 
@@ -24,9 +33,28 @@
         return !(x === x + 1);
     };
 
+    number.toHalf = function toHalf(x) {
+        return toBinary(x, 16);
+    };
+
+    number.toSingle = function toSingle(x) {
+        return toBinary(x, 32);
+    };
+
+    number.toDouble = function toDouble(x) {
+        return toBinary(x, 64);
+    };
+
+    number.toQuadruple = function toQuadruple(x) {
+        return toBinary(x, 128);
+    };
+
     // 64 bit floating point by IEEE754
     // cf: https://en.wikipedia.org/wiki/IEEE_floating_point
-    number.toDouble = function toDouble(x) {
+    function toBinary(x, bit) {
+        var exponentBit;
+        var fractionBit;
+
         var s; // sign of x
         var sign; // 0 for plus or 1 for minus
         var q; // exponent not bias
@@ -34,7 +62,31 @@
         var cStr;
         // var c; // 1.fraction
         // var fraction;
-        var EMAX = Math.pow(2, EXPONENT_BIT - 1) - 1;
+        var emax;
+
+        var bitInfo = {
+            16: {
+                exponentBit: EXPONENT_BIT_16,
+                fractionBit: FRACTION_BIT_16
+            },
+            32: {
+                exponentBit: EXPONENT_BIT_32,
+                fractionBit: FRACTION_BIT_32
+            },
+            64: {
+                exponentBit: EXPONENT_BIT_64,
+                fractionBit: FRACTION_BIT_64
+            },
+            128: {
+                exponentBit: EXPONENT_BIT_128,
+                fractionBit: FRACTION_BIT_128
+            }
+        }[bit];
+
+        exponentBit = bitInfo.exponentBit;
+        fractionBit = bitInfo.fractionBit;
+
+        emax = Math.pow(2, exponentBit - 1) - 1;
 
         var str = (x || 0).toString(2);
 
@@ -65,13 +117,13 @@
             }
         }
 
-        exponent = q + EMAX;
+        exponent = q + emax;
 
         s = Math.sign(x);
         sign = (s === 0)? 0 : (s > 0)? 0 : 1;
 
-        return sign.toString(2) + padLeft(exponent.toString(2), EXPONENT_BIT) + padRight(cStr, FRACTION_BIT);
-    };
+        return sign.toString(2) + padLeft(exponent.toString(2), exponentBit) + padRight(cStr, fractionBit);
+    }
 
     function padLeft(str, n) {
         var zeros = (new Array(n + 1)).join('0');
@@ -83,7 +135,23 @@
         return (str + zeros).slice(0, n);
     }
 
+    number.parseHalf = function parseHalf(str) {
+        return parseBinary(str, 16);
+    };
+
+    number.parseSingle = function parseSingle(str) {
+        return parseBinary(str, 32);
+    };
+
     number.parseDouble = function parseDouble(str) {
+        return parseBinary(str, 64);
+    };
+
+    number.parseQuadruple = function parseQuadruple(str) {
+        return parseBinary(str, 128);
+    };
+
+    function parseBinary(str, bit) {
         var signStr;
         var exponentStr;
         var fractionStr;
@@ -94,19 +162,46 @@
         var q; // exponent not bias
         var c; // 1.fraction
 
-        var EMAX = Math.pow(2, EXPONENT_BIT - 1) - 1;
+        var exponentBit;
+        var fractionBit;
+
+        var emax;
+
+        var bitInfo = {
+            16: {
+                exponentBit: EXPONENT_BIT_16,
+                fractionBit: FRACTION_BIT_16
+            },
+            32: {
+                exponentBit: EXPONENT_BIT_32,
+                fractionBit: FRACTION_BIT_32
+            },
+            64: {
+                exponentBit: EXPONENT_BIT_64,
+                fractionBit: FRACTION_BIT_64
+            },
+            128: {
+                exponentBit: EXPONENT_BIT_128,
+                fractionBit: FRACTION_BIT_128
+            }
+        }[bit];
+
+        exponentBit = bitInfo.exponentBit;
+        fractionBit = bitInfo.fractionBit;
+
+        emax = Math.pow(2, exponentBit - 1) - 1;
 
         signStr = str.slice(0, 1);
-        exponentStr = str.slice(1, 1 + EXPONENT_BIT);
-        fractionStr = str.slice(1 + EXPONENT_BIT, 1 + EXPONENT_BIT + FRACTION_BIT);
+        exponentStr = str.slice(1, 1 + exponentBit);
+        fractionStr = str.slice(1 + exponentBit, 1 + exponentBit + fractionBit);
 
         s = Math.pow(-1, parseInt(signStr, 2));
-        q = parseInt(exponentStr, 2) - EMAX;
+        q = parseInt(exponentStr, 2) - emax;
         fraction = parseInt(fractionStr, 2);
-        c = 1 + fraction / Math.pow(2, FRACTION_BIT);
+        c = 1 + fraction / Math.pow(2, fractionBit);
 
         return s * c * Math.pow(2, q);
-    };
+    }
 
     window.number = number;
 }());
